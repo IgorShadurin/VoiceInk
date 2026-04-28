@@ -6,6 +6,7 @@ enum AutoSendKey: String, Codable, CaseIterable {
     case enter = "enter"
     case shiftEnter = "shiftEnter"
     case commandEnter = "commandEnter"
+    case tab = "tab"
 
     var displayName: String {
         switch self {
@@ -13,6 +14,7 @@ enum AutoSendKey: String, Codable, CaseIterable {
         case .enter: return "Return (⏎)"
         case .shiftEnter: return "Shift + Return (⇧⏎)"
         case .commandEnter: return "Command + Return (⌘⏎)"
+        case .tab: return "Tab (⇥)"
         }
     }
 
