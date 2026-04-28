@@ -2,6 +2,7 @@ import Foundation
 import AppKit
 import Carbon
 import os
+import KeySender
 
 private let logger = Logger(subsystem: "com.VoiceInk", category: "CursorPaster")
 
@@ -113,30 +114,27 @@ class CursorPaster {
         guard key.isEnabled else { return }
         guard AXIsProcessTrusted() else { return }
 
-        let source = CGEventSource(stateID: .privateState)
-        let virtualKey: CGKeyCode
+        let event: KeyEvent
         switch key {
-        case .tab:
-            virtualKey = 0x30
-        default:
-            virtualKey = 0x24
-        }
-
-        let keyDown = CGEvent(keyboardEventSource: source, virtualKey: virtualKey, keyDown: true)
-        let keyUp   = CGEvent(keyboardEventSource: source, virtualKey: virtualKey, keyDown: false)
-
-        switch key {
-        case .none: return
-        case .enter, .tab: break
+        case .none:
+            return
+        case .enter:
+            event = KeyEvent(key: .return, modifiers: [])
         case .shiftEnter:
-            keyDown?.flags = .maskShift
-            keyUp?.flags   = .maskShift
+            event = KeyEvent(key: .return, modifiers: [.shift])
         case .commandEnter:
-            keyDown?.flags = .maskCommand
-            keyUp?.flags   = .maskCommand
+            event = KeyEvent(key: .return, modifiers: [.command])
+        case .tab:
+            event = KeyEvent(key: .tab, modifiers: [])
         }
 
-        keyDown?.post(tap: .cghidEventTap)
-        keyUp?.post(tap: .cghidEventTap)
+        let sender = KeySender(for: event)
+
+        // Posting to the frontmost PID is more reliable for terminal tab completion.
+        if let frontmostApp = NSWorkspace.shared.frontmostApplication {
+            sender.send(to: frontmostApp)
+        } else {
+            sender.sendGlobally()
+        }
     }
 }
